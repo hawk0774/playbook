@@ -5,7 +5,7 @@
 
   # === Общие зависимости ===
   pre_tasks:
-    - name: Install EPEL (common for all)
+    - name: Install EPEL 
       yum:
         name: epel-release
         state: present
