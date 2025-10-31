@@ -1,0 +1,70 @@
+---
+- name: Deploy ClickHouse, Vector, and LightHouse
+  hosts: all
+  become: true
+
+  # === Общие зависимости ===
+  pre_tasks:
+    - name: Install EPEL (common for all)
+      yum:
+        name: epel-release
+        state: present
+      tags:
+        - always  
+
+    - name: Install nginx and git for LightHouse
+      yum:
+        name:
+          - nginx
+          - git
+        state: present
+      tags:
+        - lighthouse
+        - web
+
+    - name: Ensure nginx is running
+      systemd:
+        name: nginx
+        state: started
+        enabled: true
+      tags:
+        - lighthouse
+        - web
+
+  # === ClickHouse ===
+  roles:
+    - role: clickhouse
+      tags:
+        - clickhouse
+        - db
+
+  # === Vector ===
+  roles:
+    - role: vector
+      tags:
+        - vector
+        - logging
+
+  # === LightHouse (зависит от nginx) ===
+  roles:
+    - role: lighthouse
+      tags:
+        - lighthouse
+        - web
+
+  # === Проверки ===
+  post_tasks:
+    - name: Wait for ClickHouse HTTP interface
+      wait_for:
+        host: "{{ ansible_host }}"
+        port: 8123
+        timeout: 60
+      tags: clickhouse
+
+    - name: Test LightHouse page
+      uri:
+        url: "http://{{ ansible_host }}"
+        return_content: true
+      register: result
+      failed_when: "'lighthouse' not in result.content | lower"
+      tags: lighthouse
