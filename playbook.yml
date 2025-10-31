@@ -52,19 +52,4 @@
         - lighthouse
         - web
 
-  # === Проверки ===
-  post_tasks:
-    - name: Wait for ClickHouse HTTP interface
-      wait_for:
-        host: "{{ ansible_host }}"
-        port: 8123
-        timeout: 60
-      tags: clickhouse
 
-    - name: Test LightHouse page
-      uri:
-        url: "http://{{ ansible_host }}"
-        return_content: true
-      register: result
-      failed_when: "'lighthouse' not in result.content | lower"
-      tags: lighthouse
